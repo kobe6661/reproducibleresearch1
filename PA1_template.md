@@ -300,7 +300,4 @@ plot(x = interval.wd, y = avg.steps.wd, type = "l", col = "cyan")
 ```
 
 ![](./PA1_template_files/figure-html/unnamed-chunk-23-1.png) 
-
-```r
-par(oldpar)
-```
+As we can see, weekend patterns do not differ that much from weekday patterns.
