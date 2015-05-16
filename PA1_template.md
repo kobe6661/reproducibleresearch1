@@ -170,6 +170,12 @@ head(processed.data2[missing,])
 ## 5    37 2012-10-01       20
 ## 6    37 2012-10-01       25
 ```
+All remaining NA values are removed then.
+
+```r
+good <- complete.cases(processed.data2)
+processed.data2 <- processed.data2[good,]
+```
 The calculation of the histogram is the same as described earlier. First we aggregate the sum of steps per day.
 
 ```r
@@ -194,7 +200,7 @@ daily.steps2 <- steps.per.day2$steps
 hist(daily.steps2)
 ```
 
-![](./PA1_template_files/figure-html/unnamed-chunk-13-1.png) 
+![](./PA1_template_files/figure-html/unnamed-chunk-14-1.png) 
 And then we print mean and median. The new mean is now 10'751.74 and the median is 10'656. Median and mean are a little bit smaller now.
 
 ```r
@@ -236,3 +242,65 @@ print(dif.median)
 ## [1] -109
 ```
 ## Are there differences in activity patterns between weekdays and weekends?
+First we create a new column *weekday*.
+
+```r
+processed.data2["weekday"] <- c("Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", 
+  "Friday", "Saturday")[as.POSIXlt(processed.data2$date)$wday + 1]
+```
+Then we capture all sundays and saturdays and assign the value 1 to them.
+
+```r
+is.saturday <- (processed.data2$weekday == "Saturday")
+processed.data2[is.saturday,]$weekday <- 1
+is.sunday <- (processed.data2$weekday == "Sunday")
+sundays <- processed.data2[is.sunday,]
+sundays$weekday <- 1
+```
+All remaining days get the value 0.
+
+```r
+is.zero <- (processed.data2$weekday != 1)
+processed.data2[is.zero,]$weekday <- 0
+```
+Then we create a factor variable.
+
+```r
+processed.data2$weekday <- factor(processed.data2$weekday, labels = c("weekday", "weekend"))
+```
+Two datasets for weekend and weekdays are created. The proper column names are given and the weekday columns removed again.
+
+```r
+weekend <- (processed.data2$weekday == "weekend")
+weekday.data <- processed.data2[!weekend,]
+colnames(weekday.data) <- c("steps","date","interval","weekday")
+weekend.data <- processed.data2[weekend,]
+colnames(weekend.data) <- c("steps","date","interval","weekday")
+weekday.data <- weekday.data[!(colnames(weekday.data) %in% c("weekday"))]
+weekend.data <- weekend.data[!(colnames(weekend.data) %in% c("weekday"))]
+```
+Then we create two aggregates for weekday and weekend activity patterns.
+
+```r
+wd.pattern <- aggregate(as.numeric(weekday.data$steps), by=list(weekday.data$interval), FUN=mean, na.rm=TRUE)
+colnames(wd.pattern) <- c("interval","steps")
+we.pattern <- aggregate(as.numeric(weekend.data$steps), by=list(weekend.data$interval), FUN=mean, na.rm=TRUE)
+colnames(we.pattern) <- c("interval","steps")
+```
+Then we plot the interval.
+
+```r
+interval.we <- we.pattern$interval
+avg.steps.we <- we.pattern$steps
+interval.wd <- wd.pattern$interval
+avg.steps.wd <- wd.pattern$steps
+oldpar <- par(mfrow=c(2,1), mar=c(3,3,1,1), oma=c(0,0,3,1))
+plot(x = interval.we, y = avg.steps.we, type = "l", col = "blue")
+plot(x = interval.wd, y = avg.steps.wd, type = "l", col = "cyan")
+```
+
+![](./PA1_template_files/figure-html/unnamed-chunk-23-1.png) 
+
+```r
+par(oldpar)
+```
